@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "futures",
+    "stdlib",
+]
+
+# todo worspaces async/await, tokio, actix and so on
