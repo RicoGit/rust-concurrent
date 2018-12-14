@@ -4,22 +4,21 @@
 //! Used: Send, Thread, Channel, AtomicUsize
 //!
 
-use std::thread;
-use std::time::Duration;
-use std::sync::mpsc::channel;
-use std::thread::JoinHandle;
-use std::sync::mpsc::Receiver;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::mpsc::channel;
+use std::sync::mpsc::Receiver;
+use std::thread;
+use std::thread::JoinHandle;
+use std::time::Duration;
 
 enum MyTask {
     Shutdown,
-    Job(u64)
+    Job(u64),
 }
 
 unsafe impl Send for MyTask {}
 
 fn main() {
-
     // create channel
     let (sender, receiver) = channel();
 
@@ -37,20 +36,15 @@ fn main() {
     sender.send(MyTask::Shutdown);
 
     start_executor_service(receiver);
-
 }
 
-
 fn start_executor_service(receiver: Receiver<MyTask>) {
-
     println!("Start event loop");
 
     let counter = AtomicUsize::new(0);
 
     let event_loop = thread::spawn(move || {
-
         loop {
-
             println!("Waiting for a new tasks.");
             let task = receiver.recv();
 
@@ -60,24 +54,19 @@ fn start_executor_service(receiver: Receiver<MyTask>) {
                 Ok(MyTask::Job(load)) => {
                     println!("Job({}) is received and processing...", load);
                     thread::sleep(Duration::from_secs(load));
-                },
+                }
                 Ok(MyTask::Shutdown) => {
                     println!("Shutdown is received.");
                     break;
-                },
+                }
                 Err(err) => {
                     println!("Error is received {:?}", err);
-                },
+                }
             }
-
         }
 
         counter
     });
 
     println!("Stop event loop, executed {:?}", event_loop.join().unwrap());
-
 }
-
-
-

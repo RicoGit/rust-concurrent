@@ -4,8 +4,11 @@ version = "0.1.0"
 authors = ["Constantine Solovev <constantine.solovev@gmail.com>"]
 edition = "2018"
 
+[[bin]]
+name = "rust-futures"
+
 [dependencies]
 
-[[bin]]
-
-name = "rust-futures"
+# 'futures' is stable version, 'futures-preview' is nightly
+futures-preview = { version = "0.3.0-alpha.10" }
+#futures = { version = "0.1" }
