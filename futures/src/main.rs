@@ -8,6 +8,7 @@ use futures::executor::ThreadPool;
 use futures::prelude::*;
 use futures::task::LocalWaker;
 use futures::Poll;
+use futures::Stream;
 use std::cell::Cell;
 use std::pin::Pin;
 use std::thread;
@@ -15,18 +16,18 @@ use std::time::Duration;
 use std::time::Instant;
 
 #[derive(Debug)]
-enum MyTask<'a> {
+enum MyTask {
     // Sleeps specified time interval.
     Sleep { start: Instant, duration: Duration },
     // Loops specified number of time. Imitates cpu-intensive work.
     Task { id: usize, loops: Cell<u64> },
     // Writes the message to stdout
-    Log { msg: &'a str },
+    Log { msg: String },
 }
 
-unsafe impl<'a> Send for MyTask<'a> {}
+unsafe impl Send for MyTask {}
 
-impl<'a> MyTask<'a> {
+impl MyTask {
     fn sleep(duration: Duration) -> Self {
         MyTask::Sleep {
             start: Instant::now(),
@@ -39,12 +40,14 @@ impl<'a> MyTask<'a> {
             loops: Cell::new(loops),
         }
     }
-    fn log(msg: &'a str) -> Self {
-        MyTask::Log { msg }
+    fn log(msg: &'static str) -> Self {
+        MyTask::Log {
+            msg: msg.to_string(),
+        }
     }
 }
 
-impl<'a> Future for MyTask<'a> {
+impl Future for MyTask {
     type Output = Result<(), ()>;
 
     fn poll(self: Pin<&mut Self>, lw: &LocalWaker) -> Poll<<Self as Future>::Output> {
@@ -57,7 +60,7 @@ impl<'a> Future for MyTask<'a> {
                     Poll::Pending
                 }
             }
-            MyTask::Log { msg } => {
+            MyTask::Log { ref msg } => {
                 println!("{}", msg);
                 Poll::Ready(Ok(()))
             }
@@ -122,8 +125,18 @@ fn main() {
     let start = MyTask::log("My Async app is started");
     let end = MyTask::log("That is the end.");
 
+    // compute fibonacci with help of streams
+
+    let fib = fibonacci().take(90).for_each(|res| {
+        MyTask::Log {
+            msg: format!("fibonacci is {:?}", res),
+        }
+        .map(|_| ())
+    });
+
     let app = start
         // future1 and future2 will be performed parallel
+        .and_then(|_| fib.map(|_| Ok(())))
         .and_then(|_| future1.join(future2).map(|_| Ok(())))
         .and_then(|_| end);
 
@@ -131,4 +144,20 @@ fn main() {
         .expect("Failed to create threadpool")
         .run(app)
         .unwrap();
+}
+
+// Illustrates how to pass and return Future
+#[allow(dead_code)]
+fn add_10<F>(f: F) -> impl Future<Output = i32>
+where
+    F: Future<Output = i32>,
+{
+    f.map(|i| i + 10)
+}
+
+fn fibonacci() -> impl Stream<Item = u64> {
+    stream::unfold((1, 1), |(curr, next)| {
+        let new_next = curr + next;
+        future::ready(Some((curr, (next, new_next))))
+    })
 }
