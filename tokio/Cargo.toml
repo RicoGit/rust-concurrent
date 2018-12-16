@@ -1,0 +1,13 @@
+[package]
+name = "rust-tokio"
+version = "0.1.0"
+authors = ["Constantine Solovev <constantine.solovev@gmail.com>"]
+edition = "2018"
+
+[[bin]]
+name = "rust-tokio"
+
+[dependencies]
+
+tokio = "0.1"
+futures = "0.1"

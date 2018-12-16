@@ -3,6 +3,7 @@
 members = [
     "futures",
     "stdlib",
+    "tokio"
 ]
 
 # todo worspaces async/await, tokio, actix and so on
