@@ -1,9 +1,10 @@
 [workspace]
 
 members = [
-    "futures",
-    "stdlib",
-    "tokio"
+    "async_await", # stlib future + crate futures + tokio with async/await
+    "futures",     # crate futures 0.1
+    "stdlib",      # only stdlib primitives
+    "tokio"        # crate tokio 0.1
 ]
 
 # todo worspaces async/await, tokio, actix and so on

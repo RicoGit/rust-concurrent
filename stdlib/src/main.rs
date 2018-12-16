@@ -8,7 +8,6 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Receiver;
 use std::thread;
-use std::thread::JoinHandle;
 use std::time::Duration;
 
 enum MyTask {
@@ -23,17 +22,17 @@ fn main() {
     let (sender, receiver) = channel();
 
     println!("Push one task");
-    sender.send(MyTask::Job(3));
+    sender.send(MyTask::Job(3)).unwrap();
 
     thread::sleep(Duration::from_secs(1));
 
     println!("Push another task");
-    sender.send(MyTask::Job(1));
+    sender.send(MyTask::Job(1)).unwrap();
 
     thread::sleep(Duration::from_secs(1));
 
     println!("Push shutdown");
-    sender.send(MyTask::Shutdown);
+    sender.send(MyTask::Shutdown).unwrap();
 
     start_executor_service(receiver);
 }
